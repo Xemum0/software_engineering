@@ -25,18 +25,18 @@ public class Main {
                 break;
                 case "minus":
                 Minus op1 = new Minus();
-                Double result = op1.compute(A, B);
-                System.out.println("Result: " + result);
+                Double result1 = op1.compute(A, B);
+                System.out.println("Result: " + result1);
                 break;
                 case "div":
                 Division op2 = new Division();
-                Double result = op2.compute(A, B);
-                System.out.println("Result: " + result);
+                Double result2 = op2.compute(A, B);
+                System.out.println("Result: " + result2);
                 break;
                 case "mul":
                 Multiplication op3 = new Multiplication();
-                Double result = op3.compute(A, B);
-                System.out.println("Result: " + result);
+                Double result3 = op3.compute(A, B);
+                System.out.println("Result: " + result3);
                 break;      
                     default:
                 System.out.println("Error: Unsupported operation. Only 'add' is supported.");
