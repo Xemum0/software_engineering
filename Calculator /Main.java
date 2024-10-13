@@ -18,25 +18,25 @@ public class Main {
         }
         
         switch (operation.toLowerCase()) {
-            case "add":
+            case "+":
                 Add addOperation = new Add();
                 Double result = addOperation.compute(A, B);
                 System.out.println("Result: " + result);
                 break;
-                case "minus":
-                Minus op1 = new Minus();
-                Double result1 = op1.compute(A, B);
-                System.out.println("Result: " + result1);
+                case "-":
+                Minus op = new Minus();
+                result = op.compute(A, B);
+                System.out.println("Result: " + result);
                 break;
-                case "div":
-                Division op2 = new Division();
-                Double result2 = op2.compute(A, B);
-                System.out.println("Result: " + result2);
+                case "/":
+                Division op1 = new Division();
+                result = op1.compute(A, B);
+                System.out.println("Result: " + result);
                 break;
-                case "mul":
-                Multiplication op3 = new Multiplication();
-                Double result3 = op3.compute(A, B);
-                System.out.println("Result: " + result3);
+                case "*":
+                Multiplication op2 = new Multiplication();
+                result = op2.compute(A, B);
+                System.out.println("Result: " + result);
                 break;      
                     default:
                 System.out.println("Error: Unsupported operation. Only 'add' is supported.");
