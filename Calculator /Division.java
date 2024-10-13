@@ -4,8 +4,9 @@ public class Division extends Calculator{
         try{
             Double result = A / B;
             return result;
-        }catch(ArethmeticException e){
+        }catch(Exception e){
             System.out.println("Error,No division by zero");
+            return 0.0;
         }
     }
 }

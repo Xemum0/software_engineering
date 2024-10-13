@@ -24,18 +24,18 @@ public class Main {
                 System.out.println("Result: " + result);
                 break;
                 case "minus":
-                Minus op = new Minus();
-                Double result = op.compute(A, B);
+                Minus op1 = new Minus();
+                Double result = op1.compute(A, B);
                 System.out.println("Result: " + result);
                 break;
                 case "div":
-                Division op = new Division();
-                Double result = op.compute(A, B);
+                Division op2 = new Division();
+                Double result = op2.compute(A, B);
                 System.out.println("Result: " + result);
                 break;
                 case "mul":
-                Multiplication op = new Multiplication();
-                Double result = op.compute(A, B);
+                Multiplication op3 = new Multiplication();
+                Double result = op3.compute(A, B);
                 System.out.println("Result: " + result);
                 break;      
                     default:

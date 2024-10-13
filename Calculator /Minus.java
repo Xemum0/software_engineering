@@ -1,5 +1,5 @@
 public class Minus  extends Calculator{
-    @override
+    @Override
     Double compute(Double A,Double B){
         return A-B ;
     }
