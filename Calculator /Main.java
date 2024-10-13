@@ -23,6 +23,21 @@ public class Main {
                 Double result = addOperation.compute(A, B);
                 System.out.println("Result: " + result);
                 break;
+                case "minus":
+                Minus op = new Minus();
+                Double result = op.compute(A, B);
+                System.out.println("Result: " + result);
+                break;
+                case "div":
+                Division op = new Division();
+                Double result = op.compute(A, B);
+                System.out.println("Result: " + result);
+                break;
+                case "mul":
+                Multiplication op = new Multiplication();
+                Double result = op.compute(A, B);
+                System.out.println("Result: " + result);
+                break;      
                     default:
                 System.out.println("Error: Unsupported operation. Only 'add' is supported.");
                 break;
