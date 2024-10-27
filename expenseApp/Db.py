@@ -11,7 +11,8 @@ class Database:
             self.connection.execute('''CREATE TABLE IF NOT EXISTS expenses (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
-                price REAL NOT NULL
+                price REAL NOT NULL,
+                insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
             )''')
 
     def add_expense(self, name, price):
