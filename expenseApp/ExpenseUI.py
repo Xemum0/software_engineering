@@ -14,9 +14,14 @@ class ExpenseUI(QMainWindow):
         super().__init__()
         self.db = Database()
         self.manager = ExpenseManager(self.db)
+        
+        # Pagination settings
+        self.items_per_page = 10
+        self.current_page = 1
+        self.total_pages = 1
 
         self.setWindowTitle("Expense Tracker")
-        self.setGeometry(100, 100, 600, 300)
+        self.setGeometry(100, 100, 600, 400)  
 
         self.init_ui()
 
@@ -57,6 +62,22 @@ class ExpenseUI(QMainWindow):
         self.table.setHorizontalHeaderLabels(["Expense", "Price", "Delete"])
         layout.addWidget(self.table)
 
+        # Pagination controls
+        pagination_layout = QHBoxLayout()
+        self.prev_button = QPushButton("Previous")
+        self.prev_button.clicked.connect(self.previous_page)
+        self.next_button = QPushButton("Next")
+        self.next_button.clicked.connect(self.next_page)
+        self.page_label = QLabel("Page 1 of 1")
+        
+        pagination_layout.addStretch()
+        pagination_layout.addWidget(self.prev_button)
+        pagination_layout.addWidget(self.page_label)
+        pagination_layout.addWidget(self.next_button)
+        pagination_layout.addStretch()
+        
+        layout.addLayout(pagination_layout)
+
         # Bottom panel for total
         total_label = QLabel("Total:")
         self.total_value = QLabel("0.00")
@@ -69,11 +90,59 @@ class ExpenseUI(QMainWindow):
         self.load_expenses()
 
     def load_expenses(self):
+        """
+        Load expenses with pagination:
+        1. Calculate total pages based on total items and items per page
+        2. Get subset of expenses for current page
+        3. Update pagination controls
+        4. Display current page's expenses in table
+        """
         self.table.setRowCount(0)
-        expenses = self.manager.get_expenses()
-        for expense_id, name, price in expenses:
+        
+        # Get total count of expenses and calculate total pages
+        all_expenses = self.manager.get_expenses()
+        total_items = len(all_expenses)
+        self.total_pages = max(1, (total_items + self.items_per_page - 1) // self.items_per_page)
+        
+        # Adjust current page if it's out of bounds
+        self.current_page = min(max(1, self.current_page), self.total_pages)
+        
+        # Calculate start and end indices for current page
+        start_idx = (self.current_page - 1) * self.items_per_page
+        end_idx = start_idx + self.items_per_page
+        
+        # Get expenses for current page
+        current_page_expenses = all_expenses[start_idx:end_idx]
+        
+        # Update table with current page's expenses
+        for expense_id, name, price in current_page_expenses:
             self.add_expense_row(expense_id, name, price)
+            
+        # Update pagination controls
+        self.update_pagination_controls()
         self.update_total()
+
+    def update_pagination_controls(self):
+        """
+        Update pagination controls state:
+        1. Enable/disable Previous/Next buttons based on current page
+        2. Update page label
+        """
+        self.prev_button.setEnabled(self.current_page > 1)
+        self.next_button.setEnabled(self.current_page < self.total_pages)
+        self.page_label.setText(f"Page {self.current_page} of {self.total_pages}")
+
+    def previous_page(self):
+        """Handle previous page button click"""
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.load_expenses()
+
+    def next_page(self):
+        """Handle next page button click"""
+        if self.current_page < self.total_pages:
+            self.current_page += 1
+            self.load_expenses()
 
     def add_expense_row(self, expense_id, name, price):
         row_position = self.table.rowCount()
@@ -91,7 +160,7 @@ class ExpenseUI(QMainWindow):
         price_text = self.price_input.text().strip()
 
         if self.manager.add_expense(expense_name, price_text):
-            self.load_expenses()
+            self.load_expenses()  # Will refresh with pagination
             self.expense_input.clear()
             self.price_input.clear()
         else:
@@ -99,13 +168,10 @@ class ExpenseUI(QMainWindow):
 
     def delete_expense(self, expense_id, row_position):
         self.manager.delete_expense(expense_id)
-        self.table.removeRow(row_position)
-        self.update_total()
+        self.load_expenses()  # Reload all expenses with pagination instead of just removing the row
 
     def update_total(self):
-        total = 0.0
-        for row in range(self.table.rowCount()):
-            price_item = self.table.item(row, 1)
-            if price_item:
-                total += float(price_item.text())
+        # Calculate total for all expenses, not just current page
+        all_expenses = self.manager.get_expenses()
+        total = sum(price for _, _, price in all_expenses)
         self.total_value.setText(f"{total:.2f}")
