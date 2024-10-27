@@ -15,13 +15,17 @@ class Database:
                 insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
             )''')
 
-    def add_expense(self, name, price):
+    def add_expense(self, name, price,date):
         with self.connection:
-            self.connection.execute('INSERT INTO expenses (name, price) VALUES (?, ?)', (name, price))
+            self.connection.execute('INSERT INTO expenses (name, price,insert_date) VALUES (?, ?,?)', (name, price,date))
 
     def get_expenses(self):
         with self.connection:
             return self.connection.execute('SELECT * FROM expenses').fetchall()
+    
+    def get_expenses_in_duration(self,start_date,end_date):
+        with self.connection:
+            return self.connection.execute('SELECT * FROM expenses WHERE insert_date BETWEEN ? AND ?',(start_date,end_date)).fetchall()
 
     def delete_expense(self, expense_id):
         with self.connection:

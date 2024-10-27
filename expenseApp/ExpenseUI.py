@@ -3,10 +3,12 @@ from Db import Database
 from expenseMng import ExpenseManager
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout,
-    QHBoxLayout, QTableWidget, QTableWidgetItem, 
+    QHBoxLayout, QTableWidget, QTableWidgetItem, QDateEdit,
     QLineEdit, QLabel, QPushButton, QMenuBar, QMenu, QMessageBox
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt,QDate
+import pandas as pd 
+import matplotlib.pyplot as plt
 
 # Main UI class
 class ExpenseUI(QMainWindow):
@@ -46,14 +48,26 @@ class ExpenseUI(QMainWindow):
         price_label = QLabel("Price:")
         self.price_input = QLineEdit()
         self.price_input.setFixedWidth(100)
+        date_label = QLabel("Date:")
+        self.date_input = QDateEdit()
+        self.date_input.setCalendarPopup(True)
+        self.date_input.setDate(QDate.currentDate())
 
         add_button = QPushButton("Add Expense")
         add_button.clicked.connect(self.add_expense)
-
+        
+        
+        export = QPushButton("Export")
+        export.clicked.connect(self.export)
+        top_panel.addWidget(export)
+        
+        
         top_panel.addWidget(expense_label)
         top_panel.addWidget(self.expense_input)
         top_panel.addWidget(price_label)
         top_panel.addWidget(self.price_input)
+        top_panel.addWidget(date_label)
+        top_panel.addWidget(self.date_input)
         top_panel.addWidget(add_button)
 
         # Table to display expenses
@@ -88,7 +102,33 @@ class ExpenseUI(QMainWindow):
 
         # Load initial data from the database
         self.load_expenses()
+    def export(self):
+        data={
+        "name":[],
+        "price":[],
+        "insert date":[]
+        }
+        expenses = self.manager.get_expenses()
+        for expense_id, name, price,insert_date in expenses:
+            data["name"].append(name)
+            data["price"].append(price)
+            data['insert date']=insert_date
+        df = pd.DataFrame(data)
 
+# Create a figure and axis
+        fig, ax = plt.subplots(figsize=(8, 4))  # Set the size of the PDF
+
+# Hide axes
+        ax.axis('tight')
+        ax.axis('off')
+
+# Create a table from the DataFrame
+        table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc='center', loc='center')
+
+# Save the table as a PDF
+        plt.savefig('output_table.pdf', bbox_inches='tight')
+        plt.close()
+    
     def load_expenses(self):
         """
         Load expenses with pagination:
@@ -115,8 +155,8 @@ class ExpenseUI(QMainWindow):
         current_page_expenses = all_expenses[start_idx:end_idx]
         
         # Update table with current page's expenses
-        for expense_id, name, price in current_page_expenses:
-            self.add_expense_row(expense_id, name, price)
+        for expense_id, name, price,date in current_page_expenses:
+            self.add_expense_row(expense_id, name, price,date)
             
         # Update pagination controls
         self.update_pagination_controls()
@@ -144,12 +184,12 @@ class ExpenseUI(QMainWindow):
             self.current_page += 1
             self.load_expenses()
 
-    def add_expense_row(self, expense_id, name, price):
+    def add_expense_row(self, expense_id, name, price,date):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         self.table.setItem(row_position, 0, QTableWidgetItem(name))
         self.table.setItem(row_position, 1, QTableWidgetItem(f"{price:.2f}"))
-
+        self.table.setItem(row_position, 2, QTableWidgetItem(date))
         # Create delete button
         delete_button = QPushButton("Delete")
         delete_button.clicked.connect(lambda: self.delete_expense(expense_id, row_position))
@@ -158,8 +198,8 @@ class ExpenseUI(QMainWindow):
     def add_expense(self):
         expense_name = self.expense_input.text().strip()
         price_text = self.price_input.text().strip()
-
-        if self.manager.add_expense(expense_name, price_text):
+        date = self.date_label.text().strip()
+        if self.manager.add_expense(expense_name, price_text,date):
             self.load_expenses()  # Will refresh with pagination
             self.expense_input.clear()
             self.price_input.clear()
