@@ -1,6 +1,5 @@
 import sqlite3
 
-# Database class to handle SQLite interactions
 class Database:
     def __init__(self, db_name="expenses.db"):
         self.connection = sqlite3.connect(db_name)
@@ -12,20 +11,36 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 price REAL NOT NULL,
-                insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
+                insert_date DATE NOT NULL
             )''')
 
-    def add_expense(self, name, price,date):
+    def add_expense(self, name, price, date):
         with self.connection:
-            self.connection.execute('INSERT INTO expenses (name, price,insert_date) VALUES (?, ?,?)', (name, price,date))
+            self.connection.execute('INSERT INTO expenses (name, price, insert_date) VALUES (?, ?, ?)', 
+                                 (name, price, date))
 
-    def get_expenses(self):
+    def get_expenses(self, page=1, items_per_page=10):
+        offset = (page - 1) * items_per_page
         with self.connection:
-            return self.connection.execute('SELECT * FROM expenses').fetchall()
+            return self.connection.execute(
+                'SELECT * FROM expenses ORDER BY insert_date DESC LIMIT ? OFFSET ?', 
+                (items_per_page, offset)
+            ).fetchall()
     
-    def get_expenses_in_duration(self,start_date,end_date):
+    def get_total_expenses_count(self):
         with self.connection:
-            return self.connection.execute('SELECT * FROM expenses WHERE insert_date BETWEEN ? AND ?',(start_date,end_date)).fetchall()
+            return self.connection.execute('SELECT COUNT(*) FROM expenses').fetchone()[0]
+    
+    def get_expenses_in_duration(self, start_date, end_date, page=1, items_per_page=10):
+        offset = (page - 1) * items_per_page
+        with self.connection:
+            return self.connection.execute(
+                '''SELECT * FROM expenses 
+                   WHERE insert_date BETWEEN ? AND ? 
+                   ORDER BY insert_date DESC 
+                   LIMIT ? OFFSET ?''',
+                (start_date, end_date, items_per_page, offset)
+            ).fetchall()
 
     def delete_expense(self, expense_id):
         with self.connection:
