@@ -16,9 +16,8 @@ class User(db.Model):
     name = db.Column(db.String(50), nullable=False)
     phone = db.Column(db.String(20), nullable=True)
     role = db.Column(db.Integer, ForeignKey('role.id'))              #0 for user, 1 for company, 2 for admin
-    company_id=db.Column(db.String(130), ForeignKey('company.id'))
-    branch_id = db.Column(db.String(130), ForeignKey('branch.id'))
-
+    company_id=db.Column(db.String(130), ForeignKey('company.id'),ondelete='CASCADE')
+    branch_id = db.Column(db.String(130), ForeignKey('branch.id'),ondelete='CASCADE')
     created_at = db.Column(db.String(120),nullable=False)
     avatar = db.Column(db.String(120),nullable=False)
     
@@ -27,7 +26,7 @@ class User(db.Model):
 class Company(db.Model):
     __tablename__ = 'company'
 
-    id = db.Column(db.String(32), primary_key=True,default =lambda: str(uuid.uuid4))
+    id = db.Column(db.String(32), primary_key=True,default =lambda: str(uuid.uuid4()))
     
     name = db.Column(db.String(32),unique=True,nullable=False)
     email = db.Column(db.String(132),unique=True,nullable=False)
@@ -63,7 +62,7 @@ class Branch(db.Model):
     __tablename__ = 'branch'
 
     id = db.Column(db.String(120), primary_key=True,default =lambda: str(uuid.uuid4()))
-    company = db.Column(db.String(120),ForeignKey('company.id'))
+    company = db.Column(db.String(120),ForeignKey('company.id'),ondelete='CASCADE')
     name = db.Column(db.String(120),nullable=False,unique=True)
     email = db.Column(db.String(120),nullable=False)
     phone=db.Column(db.String(120),nullable=False)
@@ -83,7 +82,7 @@ class Branch(db.Model):
 class Company_register(db.Model):
     __tablename__ = 'company_register'
 
-    id = db.Column(db.String(32), primary_key=True,default =lambda: str(uuid.uuid4))
+    id = db.Column(db.String(32), primary_key=True,default =lambda: str(uuid.uuid4()))
     name = db.Column(db.String(32),unique=True,nullable=False)
     email = db.Column(db.String(132),unique=True,nullable=False)
     admin_email = db.Column(db.String(132),unique=True,nullable=False)
@@ -153,7 +152,7 @@ class Review(db.Model):
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(120),ForeignKey('users.id'))
-    branch_id = db.Column(db.String(120),ForeignKey('branch.id'))
+    branch_id = db.Column(db.String(120),ForeignKey('branch.id'),ondelete='CASCADE')
     title = db.Column(db.String(120))
     description = db.Column(db.String(120))
     rating = db.Column(db.Float, nullable=False)
@@ -169,7 +168,24 @@ class Review(db.Model):
 class Flagged(db.Model):
     __tablename__ = 'flagged'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    review_id= db.Column(db.String(120))
+    review_id= db.Column(db.String(120),ForeignKey('review.id'),ondelete='CASCADE')
     description= db.Column(db.String(120))
+    user_id= db.Column(db.String(120),ForeignKey('users.id'))
+    
+    
+
+class Response(db.Model):
+    __tablename__ = 'response'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    review_id= db.Column(db.String(120),ForeignKey('review.id'))
+    description= db.Column(db.String(120))
+    user_id= db.Column(db.String(120),ForeignKey('users.id'))
+    
+
+
+class Likes(db.Model):
+    __tablename__ = 'likes'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    review_id= db.Column(db.String(120),ForeignKey('review.id'),ondelete='CASCADE')
     user_id= db.Column(db.String(120),ForeignKey('users.id'))
     
