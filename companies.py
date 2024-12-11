@@ -2,6 +2,7 @@ from datetime import datetime
 import uuid
 import bcrypt
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt_identity
 from models import Branch, Company, Company_register, User
 from models import Company, db
 import secrets
@@ -10,20 +11,21 @@ import string
 
 companies_blueprint = Blueprint('companies', __name__)
 
-@companies_blueprint.route('/companies/<string:company_name>/visit', methods=['POST'])
-def increment_visits(company_name):
-    company = Company.query.filter_by(name=company_name).first()
-    if not company:
-        return jsonify({"msg": "Company not found"}), 404
+# @companies_blueprint.route('/companies/visit', methods=['POST'])
+# def increment_visits(company_name):
+#     account_id=get_jwt_identity()
+#     company = Company.query.filter_by(name=company_name).first()
+#     if not company:
+#         return jsonify({"msg": "Company not found"}), 404
 
-    company.visits += 1
-    db.session.commit()
+#     company.visits += 1
+#     db.session.commit()
 
-    return jsonify({
-        "msg": "Visit count updated",
-        "company_id": company.id,
-        "visits": company.visits
-    }), 200
+#     return jsonify({
+#         "msg": "Visit count updated",
+#         "company_id": company.id,
+#         "visits": company.visits
+#     }), 200
 
 
 
@@ -46,6 +48,7 @@ def increment_visits(company_name):
 @companies_blueprint.route('/company_register', methods=['POST'])
 def company_register():
     data = request.get_json()
+    
     name = data.get('name')
     logo = data.get('logo')
     category = data.get('category')
@@ -108,8 +111,10 @@ def company_validate():
     data = request.get_json()
     validated = data.get("validated")
     company_id = data.get("company_id")
+    account_id=get_jwt_identity()
+    user=User.query.filter_by(id=account_id,role=0).first()
     company = Company_register.query.filter_by(id = company_id).first()
-    if company:
+    if user and company:
         if User.query.filter_by(email=company.admin_email).first():
             return jsonify({"msg": "Admin email already exists"}), 400
         if validated:
@@ -123,7 +128,7 @@ def company_validate():
             return jsonify ({"msg": "company validated and admin account created", 
                              "company": {
                                  "id": company.id,
-                                 "admin_password": admin_password
+                                 "account_password": admin_password
                              }
                              }), 201
         else :
@@ -145,12 +150,14 @@ def company_validate():
     
     
     
-@companies_blueprint.route('/company/<string:company_admin_name>/add_branch', methods=['POST'])
+@companies_blueprint.route('/company/add_branch', methods=['POST'])
 def add_branch(company_admin_name):
-    user=User.query.filter_by(name=company_admin_name,role=2)
+    account_id=get_jwt_identity()
+    user=User.query.filter_by(id=account_id,role=2)
     if user:
         data = request.get_json()
         name = data.get('name')
+        account_email=data.get('account_email')
         category = data.get('category')
         address = data.get('address')
         email = data.get('email')
@@ -169,13 +176,21 @@ def add_branch(company_admin_name):
         if branch :
             return jsonify({"msg": "Name already exists"}), 400
 
+        if User.query.filter_by(email=account_email).first():
+            return jsonify({"msg": "Branch Admin email already exists"}), 400
+            
+        admin_password = generate_password()
+        
         branch = Branch(
-            name,email,company_id,email,address,phone)
+        name,email,company_id,email,address,phone)
+        db.session.add(User(email=account_email, password=bcrypt.generate_password_hash(admin_password).decode('utf-8'), name = f"company.name admin", role = 3,company_id=company.company_id, branch_id = branch.id) )
+
         db.session.add(branch)
         db.session.commit()
         return jsonify({
         "msg": "Branch added successfully.",
-        "branch_id": branch.id
+        "branch_id": branch.id,
+        "account_password":admin_password
     }), 201
     else:
         return jsonify({
@@ -262,3 +277,104 @@ def generate_password(length=12):
     # Convert list to string
     return ''.join(password)
 
+
+
+
+
+
+
+
+
+
+
+@companies_blueprint.route('/edit_company/edit', methods=['POST'])
+def register():
+    data = request.get_json()
+    account_id=get_jwt_identity()
+    company_id=data('company_id')
+    company=Company.query.filter_by(id=company_id).first()
+    user=Company.query.filter_by(id=account_id).first()
+    if user.role==2 and company and company.id==user.company_id:
+        if data.get('name'):
+            company.name= data.get('name')
+        if data.get('description'):
+            company.name= data.get('description')
+        if data.get('website'):
+            company.name= data.get('website')
+        if data.get('social_links'):
+            company.name= data.get('social_links')
+        if data.get('address'):
+            company.name= data.get('address')
+        if data.get('email'):
+            company.name= data.get('email')
+        if data.get('phone'):
+            company.name= data.get('phone')
+        if data.get('logo'):
+            company.name= data.get('logo')
+        db.session.commit()
+        return jsonify({
+        "msg": 'company modified successfully',
+    }), 201
+    else:
+        if not company:
+             return jsonify({
+        "msg":'Company doesn"t exist',
+
+    }), 404   
+        else: 
+            if not user:
+                 return jsonify({
+        "msg":'user doesn"t exist',
+
+    }), 404 
+            else:
+                
+                return jsonify({
+        "msg":'unothorised user',
+
+    }), 404
+
+
+
+
+
+
+@companies_blueprint.route('/edit_branch/edit', methods=['POST'])
+def register():
+    data = request.get_json()
+    account_id=get_jwt_identity()
+    branch_id=data('branch_id')
+    branch=Branch.query.filter_by(id=branch_id).first()
+    user=Company.query.filter_by(id=account_id).first()
+    if ((user.role==2 and branch.company_id==user.company_id) or (user.role==3 and user.branch_id==branch_id)) and branch:
+        if data.get('name'):
+            branch.name= data.get('name')
+        if data.get('address'):
+            branch.name= data.get('address')
+        if data.get('email'):
+            branch.name= data.get('email')
+        if data.get('phone'):
+            branch.name= data.get('phone')
+
+        db.session.commit()
+        return jsonify({
+        "msg": 'branch modified successfully',
+    }), 201
+    else:
+        if not branch:
+             return jsonify({
+        "msg":'Company doesn"t exist',
+
+    }), 404   
+        else: 
+            if not user:
+                 return jsonify({
+        "msg":'user doesn"t exist',
+
+    }), 404 
+            else:
+                
+                return jsonify({
+        "msg":'unothorised user',
+
+    }), 404
