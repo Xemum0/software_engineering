@@ -19,14 +19,89 @@ class ExpenseUI(QMainWindow):
         super().__init__()
         self.db = Database()
         self.manager = ExpenseManager(self.db)
-        
+
         self.items_per_page = 10
         self.current_page = 1
         self.is_filtered = False
-        
+
+        # Apply stylesheet
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #2b2b2b;
+                color: #ffffff;
+            }
+            QFrame {
+                background-color: #3c3f41;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton {
+                background-color: #4caf50;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                border: none;
+                min-width: 80px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QPushButton:disabled {
+                background-color: #5c6e58;
+            }
+            QLineEdit, QDateEdit {
+                background-color: #2b2b2b;
+                color: white;
+                border: 1px solid #4caf50;
+                padding: 6px;
+                border-radius: 4px;
+            }
+            QLabel {
+                color: #ffffff;
+            }
+            QTableWidget {
+                background-color: #3c3f41;
+                color: #ffffff;
+                border: none;
+                gridline-color: #555555;
+                font-size: 13px;  
+            }
+            QTableWidget QHeaderView::section {
+                background-color: #4caf50;
+                color: white;
+                padding: 8px;
+                border: none;
+            }
+
+            QMenuBar {
+                background-color: #3c3f41;
+                color: white;
+            }
+            QMenuBar::item {
+                background-color: #3c3f41;
+                color: white;
+            }
+            QMenuBar::item:selected {
+                background-color: #4caf50;
+            }
+            QScrollBar:vertical, QScrollBar:horizontal {
+                border: none;
+                background: #2b2b2b;
+                width: 8px;
+            }
+            QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+                background: #4caf50;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+                background: none;
+            }
+        """)
+
         self.setWindowTitle("Expense Tracker")
         self.setGeometry(100, 100, 1000, 700)
-        
+
         self.init_ui()
 
     def init_ui(self):
@@ -49,6 +124,7 @@ class ExpenseUI(QMainWindow):
         expense_label = QLabel("Expense:")
         self.expense_input = QLineEdit()
         self.expense_input.setFixedWidth(150)
+
 
         price_label = QLabel("Price:")
         self.price_input = QLineEdit()
@@ -117,6 +193,18 @@ class ExpenseUI(QMainWindow):
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Expense", "Price", "Date", "Action"])
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setCornerButtonEnabled(False)
+
+        # Fix header height and styling
+        header = self.table.horizontalHeader()
+        header.setFixedHeight(60)
+        header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        
+        # Set column widths
+        self.table.setColumnWidth(0, 300)  
+        self.table.setColumnWidth(1, 150)
+        self.table.setColumnWidth(2, 150) 
+
         layout.addWidget(self.table)
 
         # Pagination controls
